@@ -11,6 +11,7 @@ import 'package:at_location_flutter/utils/constants/colors.dart';
 import 'package:at_location_flutter/utils/constants/constants.dart';
 import 'package:at_location_flutter/utils/constants/init_location_service.dart';
 import 'at_location_notification_listener.dart';
+import 'package:at_client/src/service/notification_service.dart';
 
 class SharingLocationService {
   static final SharingLocationService _singleton =
@@ -19,6 +20,26 @@ class SharingLocationService {
 
   factory SharingLocationService() {
     return _singleton;
+  }
+
+  demoNotificationService(String atsign) async {
+    var atKey = newAtKey((5 * 60000),
+        'sharelocation-${DateTime.now().microsecondsSinceEpoch}', atsign,
+        ttl: (5 * 60000), expiresAt: DateTime.now().add(Duration(minutes: 5)));
+
+    var _notificationResult = await AtLocationNotificationListener()
+        .clientNotificationService
+        .notify(NotificationParams.forUpdate(atKey, value: 'Testing new SDK'),
+            onSuccess: (_notificationResult) {
+      print(
+          '${atKey.key} sent successfully with ${_notificationResult.notificationStatusEnum}');
+    }, onError: (_notificationResult) {
+      print(
+          '${atKey.key} sent failed with ${_notificationResult.notificationStatusEnum}');
+    });
+
+    print(
+        'After awaiting ${atKey.key} sent successfully with ${_notificationResult.notificationStatusEnum}');
   }
 
   List checkForAlreadyExisting(String? atsign) {
@@ -69,6 +90,9 @@ class SharingLocationService {
   /// Sends a 'sharelocation' key to [atsign] with duration of [minutes] minute
   Future<bool?> sendShareLocationEvent(String? atsign, bool isAcknowledgment,
       {int? minutes}) async {
+    demoNotificationService(atsign!);
+    return null;
+
     try {
       var alreadyExists = checkForAlreadyExisting(atsign);
       var result;

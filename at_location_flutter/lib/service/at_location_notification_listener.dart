@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'request_location_service.dart';
 import 'sharing_location_service.dart';
 import 'sync_secondary.dart';
+import 'package:at_client/src/service/notification_service_impl.dart';
 
 /// Starts monitor and listens for notifications related to this package.
 class AtLocationNotificationListener {
@@ -26,6 +27,7 @@ class AtLocationNotificationListener {
   late GlobalKey<NavigatorState> navKey;
   // ignore: non_constant_identifier_names
   String? ROOT_DOMAIN;
+  late NotificationServiceImpl clientNotificationService;
 
   void init(
       AtClientImpl atClientInstanceFromApp,
@@ -42,16 +44,43 @@ class AtLocationNotificationListener {
     MasterLocationService().init(currentAtSignFromApp, atClientInstanceFromApp,
         newGetAtValueFromMainApp: newGetAtValueFromMainApp);
 
+    initNotificationService();
+  }
+
+  Future<void> initNotificationService() async {
+    await AtClientImpl.createClient(
+        atClientInstance!.currentAtSign!,
+        atClientInstance!.getPreferences()!.namespace,
+        atClientInstance!.getPreferences()!);
+    var _atsignClient =
+        await (AtClientImpl.getClient(atClientInstance!.currentAtSign!));
+    print('_atsignClient $_atsignClient');
+
+    _atsignClient!.getSyncManager()!.init(
+        atClientInstance!.currentAtSign!,
+        atClientInstance!.getPreferences()!,
+        _atsignClient.getRemoteSecondary(),
+        _atsignClient.getLocalSecondary());
+
+    clientNotificationService = NotificationServiceImpl(_atsignClient);
+
     startMonitor();
   }
 
   Future<bool> startMonitor() async {
-    if (!_monitorStarted) {
-      var privateKey = await (getPrivateKey(currentAtSign!));
-      await atClientInstance!.startMonitor(privateKey!, fnCallBack);
-      print('Monitor started in location package');
-      _monitorStarted = true;
-    }
+    clientNotificationService
+        .subscribe(regex: atClientInstance!.getPreferences()!.namespace)
+        .listen((notification) {
+      print('notification received');
+      _notificationCallback(notification);
+    });
+
+    // if (!_monitorStarted) {
+    //   var privateKey = await (getPrivateKey(currentAtSign!));
+    //   await atClientInstance!.startMonitor(privateKey!, fnCallBack);
+    //   print('Monitor started in location package');
+    //   _monitorStarted = true;
+    // }
     return true;
   }
 
@@ -67,124 +96,124 @@ class AtLocationNotificationListener {
   }
 
   void _notificationCallback(dynamic notification) async {
-    print('_notificationCallback called');
-    notification = notification.replaceFirst('notification:', '');
-    var responseJson = jsonDecode(notification);
-    var value = responseJson['value'];
-    var notificationKey = responseJson['key'];
-    print(
-        '_notificationCallback :$notification , notification key: $notificationKey');
-    var fromAtSign = responseJson['from'];
-    var atKey = notificationKey.split(':')[1];
-    var operation = responseJson['operation'];
+    print('_notificationCallback called $notification');
+    // notification = notification.replaceFirst('notification:', '');
+    // var responseJson = jsonDecode(notification);
+    // var value = responseJson['value'];
+    // var notificationKey = responseJson['key'];
+    // print(
+    //     '_notificationCallback :$notification , notification key: $notificationKey');
+    // var fromAtSign = responseJson['from'];
+    // var atKey = notificationKey.split(':')[1];
+    // var operation = responseJson['operation'];
 
-    if (operation == 'delete') {
-      if (atKey.toString().toLowerCase().contains(locationKey)) {
-        print('$notificationKey deleted');
-        MasterLocationService().deleteReceivedData(fromAtSign);
-        return;
-      }
+    // if (operation == 'delete') {
+    //   if (atKey.toString().toLowerCase().contains(locationKey)) {
+    //     print('$notificationKey deleted');
+    //     MasterLocationService().deleteReceivedData(fromAtSign);
+    //     return;
+    //   }
 
-      if (atKey
-          .toString()
-          .toLowerCase()
-          .contains(MixedConstants.SHARE_LOCATION)) {
-        print('$notificationKey containing sharelocation deleted');
-        KeyStreamService().removeData(atKey.toString());
-        return;
-      }
+    //   if (atKey
+    //       .toString()
+    //       .toLowerCase()
+    //       .contains(MixedConstants.SHARE_LOCATION)) {
+    //     print('$notificationKey containing sharelocation deleted');
+    //     KeyStreamService().removeData(atKey.toString());
+    //     return;
+    //   }
 
-      if (atKey
-          .toString()
-          .toLowerCase()
-          .contains(MixedConstants.REQUEST_LOCATION)) {
-        print('$notificationKey containing requestlocation deleted');
-        KeyStreamService().removeData(atKey.toString());
-        return;
-      }
-    }
+    //   if (atKey
+    //       .toString()
+    //       .toLowerCase()
+    //       .contains(MixedConstants.REQUEST_LOCATION)) {
+    //     print('$notificationKey containing requestlocation deleted');
+    //     KeyStreamService().removeData(atKey.toString());
+    //     return;
+    //   }
+    // }
 
-    var decryptedMessage = await atClientInstance!.encryptionService!
-        .decrypt(value, fromAtSign)
-        // ignore: return_of_invalid_type_from_catch_error
-        .catchError((e) => print('error in decrypting: $e'));
+    // var decryptedMessage = await atClientInstance!.encryptionService!
+    //     .decrypt(value, fromAtSign)
+    //     // ignore: return_of_invalid_type_from_catch_error
+    //     .catchError((e) => print('error in decrypting: $e'));
 
-    if (atKey
-        .toString()
-        .toLowerCase()
-        .contains(MixedConstants.DELETE_REQUEST_LOCATION_ACK)) {
-      var msg =
-          LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
-      // ignore: unawaited_futures
-      RequestLocationService().deleteKey(msg);
-      return;
-    }
+    // if (atKey
+    //     .toString()
+    //     .toLowerCase()
+    //     .contains(MixedConstants.DELETE_REQUEST_LOCATION_ACK)) {
+    //   var msg =
+    //       LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
+    //   // ignore: unawaited_futures
+    //   RequestLocationService().deleteKey(msg);
+    //   return;
+    // }
 
-    if (atKey.toString().toLowerCase().contains(locationKey)) {
-      var msg =
-          LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
-      MasterLocationService().updateHybridList(msg);
-      return;
-    }
+    // if (atKey.toString().toLowerCase().contains(locationKey)) {
+    //   var msg =
+    //       LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
+    //   MasterLocationService().updateHybridList(msg);
+    //   return;
+    // }
 
-    if (atKey
-        .toString()
-        .toLowerCase()
-        .contains(MixedConstants.SHARE_LOCATION_ACK)) {
-      var locationData =
-          LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
-      // ignore: unawaited_futures
-      SharingLocationService().updateWithShareLocationAcknowledge(locationData);
-      return;
-    }
+    // if (atKey
+    //     .toString()
+    //     .toLowerCase()
+    //     .contains(MixedConstants.SHARE_LOCATION_ACK)) {
+    //   var locationData =
+    //       LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
+    //   // ignore: unawaited_futures
+    //   SharingLocationService().updateWithShareLocationAcknowledge(locationData);
+    //   return;
+    // }
 
-    if (atKey
-        .toString()
-        .toLowerCase()
-        .contains(MixedConstants.SHARE_LOCATION)) {
-      var locationData =
-          LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
-      if (locationData.isAcknowledgment == true) {
-        KeyStreamService().mapUpdatedLocationDataToWidget(locationData);
-        if (locationData.rePrompt) {
-          await showMyDialog(fromAtSign, locationData);
-        }
-      } else {
-        await KeyStreamService().addDataToList(locationData);
-        await showMyDialog(fromAtSign, locationData);
-      }
-      return;
-    }
+    // if (atKey
+    //     .toString()
+    //     .toLowerCase()
+    //     .contains(MixedConstants.SHARE_LOCATION)) {
+    //   var locationData =
+    //       LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
+    //   if (locationData.isAcknowledgment == true) {
+    //     KeyStreamService().mapUpdatedLocationDataToWidget(locationData);
+    //     if (locationData.rePrompt) {
+    //       await showMyDialog(fromAtSign, locationData);
+    //     }
+    //   } else {
+    //     await KeyStreamService().addDataToList(locationData);
+    //     await showMyDialog(fromAtSign, locationData);
+    //   }
+    //   return;
+    // }
 
-    if (atKey
-        .toString()
-        .toLowerCase()
-        .contains(MixedConstants.REQUEST_LOCATION_ACK)) {
-      var locationData =
-          LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
-      // ignore: unawaited_futures
-      RequestLocationService()
-          .updateWithRequestLocationAcknowledge(locationData);
-      return;
-    }
+    // if (atKey
+    //     .toString()
+    //     .toLowerCase()
+    //     .contains(MixedConstants.REQUEST_LOCATION_ACK)) {
+    //   var locationData =
+    //       LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
+    //   // ignore: unawaited_futures
+    //   RequestLocationService()
+    //       .updateWithRequestLocationAcknowledge(locationData);
+    //   return;
+    // }
 
-    if (atKey
-        .toString()
-        .toLowerCase()
-        .contains(MixedConstants.REQUEST_LOCATION)) {
-      var locationData =
-          LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
-      if (locationData.isAcknowledgment == true) {
-        KeyStreamService().mapUpdatedLocationDataToWidget(locationData);
-        if (locationData.rePrompt) {
-          await showMyDialog(fromAtSign, locationData);
-        }
-      } else {
-        await KeyStreamService().addDataToList(locationData);
-        await showMyDialog(fromAtSign, locationData);
-      }
-      return;
-    }
+    // if (atKey
+    //     .toString()
+    //     .toLowerCase()
+    //     .contains(MixedConstants.REQUEST_LOCATION)) {
+    //   var locationData =
+    //       LocationNotificationModel.fromJson(jsonDecode(decryptedMessage));
+    //   if (locationData.isAcknowledgment == true) {
+    //     KeyStreamService().mapUpdatedLocationDataToWidget(locationData);
+    //     if (locationData.rePrompt) {
+    //       await showMyDialog(fromAtSign, locationData);
+    //     }
+    //   } else {
+    //     await KeyStreamService().addDataToList(locationData);
+    //     await showMyDialog(fromAtSign, locationData);
+    //   }
+    //   return;
+    // }
   }
 
   Future<void> showMyDialog(
