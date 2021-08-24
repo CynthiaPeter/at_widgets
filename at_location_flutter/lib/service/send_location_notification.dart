@@ -85,7 +85,7 @@ class SendLocationNotification {
 
         if (MixedConstants.isDedicated) {
           // ignore: unawaited_futures
-          SyncSecondary().callSyncSecondary(SyncOperation.syncSecondary);
+          await SyncSecondary().callSyncSecondary(SyncOperation.syncSecondary);
         }
       } else {
         /// method from main app
@@ -143,7 +143,7 @@ class SendLocationNotification {
         });
         if (MixedConstants.isDedicated) {
           // ignore: unawaited_futures
-          SyncSecondary().callSyncSecondary(SyncOperation.syncSecondary);
+          await SyncSecondary().callSyncSecondary(SyncOperation.syncSecondary);
         }
       }
 
@@ -159,7 +159,7 @@ class SendLocationNotification {
           });
           if (MixedConstants.isDedicated) {
             // ignore: unawaited_futures
-            SyncSecondary().callSyncSecondary(SyncOperation.syncSecondary);
+            await SyncSecondary().callSyncSecondary(SyncOperation.syncSecondary);
           }
         }
       });

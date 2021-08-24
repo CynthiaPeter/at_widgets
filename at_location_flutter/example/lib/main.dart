@@ -4,10 +4,12 @@ import 'package:at_onboarding_flutter/at_onboarding_flutter.dart';
 import 'package:at_onboarding_flutter/screens/onboarding_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:at_location_flutter_example/second_screen.dart';
+import 'package:at_utils/at_logger.dart';
 
 import 'constants.dart';
 
 void main() {
+  AtSignLogger.root_level = 'finer';
   runApp(MyApp());
 }
 
