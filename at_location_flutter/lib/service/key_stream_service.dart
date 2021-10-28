@@ -20,7 +20,7 @@ class KeyStreamService {
   static final KeyStreamService _instance = KeyStreamService._();
   factory KeyStreamService() => _instance;
 
-  AtClient? atClientInstance;
+  late AtClient atClientInstance;
   AtContactsImpl? atContactImpl;
   AtContact? loggedInUserDetails;
   List<KeyLocationModel> allLocationNotifications = [];
@@ -37,7 +37,7 @@ class KeyStreamService {
 
   Function(List<KeyLocationModel>)? streamAlternative;
 
-  void init(AtClient? clientInstance,
+  void init(AtClient clientInstance,
       {Function(List<KeyLocationModel>)? streamAlternative}) async {
     loggedInUserDetails = null;
     atClientInstance = clientInstance;

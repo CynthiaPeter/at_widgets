@@ -31,9 +31,9 @@ class SendLocationNotification {
   bool masterSwitchState = true;
   Function? locationPromptDialog;
 
-  AtClient? atClient;
+  AtClient atClient = AtClientManager.getInstance().atClient;
 
-  void init(AtClient? newAtClient) {
+  void init(AtClient newAtClient) {
     if ((timer != null) && (timer!.isActive)) timer!.cancel();
     atClient = newAtClient;
     atsignsToShareLocationWith = [];
@@ -58,15 +58,21 @@ class SendLocationNotification {
 
   void findAtSignsToShareLocationWith() {
     atsignsToShareLocationWith = [];
-    KeyStreamService().allLocationNotifications.forEach((notification) {
-      if ((notification.locationNotificationModel!.atsignCreator ==
-              atClient!.getCurrentAtSign()) &&
-          (notification.locationNotificationModel!.isSharing) &&
-          (notification.locationNotificationModel!.isAccepted) &&
-          (!notification.locationNotificationModel!.isExited)) {
-        atsignsToShareLocationWith.add(notification.locationNotificationModel);
-      }
-    });
+
+    try {
+      KeyStreamService().allLocationNotifications.forEach((notification) {
+        if ((notification.locationNotificationModel!.atsignCreator ==
+                atClient.getCurrentAtSign()) &&
+            (notification.locationNotificationModel!.isSharing) &&
+            (notification.locationNotificationModel!.isAccepted) &&
+            (!notification.locationNotificationModel!.isExited)) {
+          atsignsToShareLocationWith
+              .add(notification.locationNotificationModel);
+        }
+      });
+    } catch (e) {
+      print('Error in findAtSignsToShareLocationWith $e');
+    }
 
     sendLocation();
   }

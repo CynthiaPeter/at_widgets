@@ -21,7 +21,7 @@ class AtLocationNotificationListener {
 
   factory AtLocationNotificationListener() => _instance;
   final String locationKey = 'locationnotify';
-  AtClient? atClientInstance;
+  AtClient atClientInstance = AtClientManager.getInstance().atClient;
   String? currentAtSign;
   late bool showDialogBox;
   late GlobalKey<NavigatorState> navKey;
