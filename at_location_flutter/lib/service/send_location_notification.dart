@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'key_stream_service.dart';
+import 'package:at_client/src/service/notification_service.dart';
 
 /// [masterSwitchState] will control whether location is sent to any user
 ///
@@ -193,11 +194,21 @@ class SendLocationNotification {
         ..long = myLocation.longitude
         ..key = 'locationnotify-$atkeyMicrosecondId';
       try {
-        var _res = await atClient!.put(
-          atKey,
-          LocationNotificationModel.convertLocationNotificationToJson(
-              newLocationNotificationModel),
-        );
+        var _res = await AtClientManager.getInstance()
+            .notificationService
+            .notify(
+              NotificationParams.forUpdate(
+                atKey,
+                value:
+                    LocationNotificationModel.convertLocationNotificationToJson(
+                        newLocationNotificationModel),
+              ),
+            );
+        // atClient!.put(
+        //   atKey,
+        //   LocationNotificationModel.convertLocationNotificationToJson(
+        //       newLocationNotificationModel),
+        // );
         print('prepareLocationDataAndSend in location package ========> $_res');
       } catch (e) {
         print('error in sending location: $e');

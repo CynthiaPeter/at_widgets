@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:at_client_mobile/at_client_mobile.dart';
 import 'package:at_commons/at_commons.dart';
 import 'package:at_location_flutter/common_components/custom_toast.dart';
 import 'package:at_location_flutter/common_components/location_prompt_dialog.dart';
@@ -9,6 +10,7 @@ import 'package:at_location_flutter/utils/constants/init_location_service.dart';
 
 import 'at_location_notification_listener.dart';
 import 'key_stream_service.dart';
+import 'package:at_client/src/service/notification_service.dart';
 
 class RequestLocationService {
   static final RequestLocationService _singleton =
@@ -60,8 +62,6 @@ class RequestLocationService {
   Future<bool?> sendRequestLocationEvent(String? atsign) async {
     try {
       var alreadyExists = checkForAlreadyExisting(atsign);
-      var result;
-
       if (alreadyExists[0]) {
         var newLocationNotificationModel = LocationNotificationModel.fromJson(
             jsonDecode(
@@ -122,17 +122,28 @@ class RequestLocationService {
             .atClientInstance!
             .getCurrentAtSign();
 
-      result = await AtLocationNotificationListener().atClientInstance!.put(
-            atKey,
-            LocationNotificationModel.convertLocationNotificationToJson(
-                locationNotificationModel),
+      var result = await AtClientManager.getInstance()
+          .notificationService
+          .notify(
+            NotificationParams.forUpdate(
+              atKey,
+              value:
+                  LocationNotificationModel.convertLocationNotificationToJson(
+                      locationNotificationModel),
+            ),
           );
+      // await AtLocationNotificationListener().atClientInstance!.put(
+      //   atKey,
+      //   LocationNotificationModel.convertLocationNotificationToJson(
+      //       locationNotificationModel),
+      // );
       print('requestLocationNotification:$result');
 
-      if (result) {
+      if (result.notificationStatusEnum == NotificationStatusEnum.delivered) {
         await KeyStreamService().addDataToList(locationNotificationModel);
       }
-      return result;
+      return (result.notificationStatusEnum ==
+          NotificationStatusEnum.delivered);
     } catch (e) {
       return false;
     }
@@ -176,14 +187,24 @@ class RequestLocationService {
             DateTime.now().add(Duration(minutes: minutes));
       }
 
-      var result = await AtLocationNotificationListener().atClientInstance!.put(
-            atKey,
-            LocationNotificationModel.convertLocationNotificationToJson(
-                locationNotificationModel),
+      var result = await AtClientManager.getInstance()
+          .notificationService
+          .notify(
+            NotificationParams.forUpdate(
+              atKey,
+              value:
+                  LocationNotificationModel.convertLocationNotificationToJson(
+                      locationNotificationModel),
+            ),
           );
+      //  AtLocationNotificationListener().atClientInstance!.put(
+      //       atKey,
+      //       LocationNotificationModel.convertLocationNotificationToJson(
+      //           locationNotificationModel),
+      //     );
       print('requestLocationAcknowledgment $result');
 
-      if (result) {
+      if (result.notificationStatusEnum == NotificationStatusEnum.delivered) {
         CustomToast().show('Request to update data is submitted',
             AtLocationNotificationListener().navKey.currentContext,
             isSuccess: true);
@@ -195,11 +216,14 @@ class RequestLocationService {
             isError: true);
       }
 
-      if ((isSharing != null) && (result) && (!isSharing)) {
+      if ((isSharing != null) &&
+          (result.notificationStatusEnum == NotificationStatusEnum.delivered) &&
+          (!isSharing)) {
         KeyStreamService().removeData(atKey.key);
       }
 
-      return result;
+      return (result.notificationStatusEnum ==
+          NotificationStatusEnum.delivered);
     } catch (e) {
       CustomToast().show('Something went wrong , please try again.',
           AtLocationNotificationListener().navKey.currentContext,
@@ -251,20 +275,27 @@ class RequestLocationService {
       var notification =
           LocationNotificationModel.convertLocationNotificationToJson(
               locationNotificationModel);
-      var result;
-      result = await AtLocationNotificationListener().atClientInstance!.put(
-            key,
-            notification,
-          );
+      var result =
+          await AtClientManager.getInstance().notificationService.notify(
+                NotificationParams.forUpdate(
+                  key,
+                  value: notification,
+                ),
+              );
+      // await AtLocationNotificationListener().atClientInstance!.put(
+      //       key,
+      //       notification,
+      //     );
 
-      if (result) {
+      if (result.notificationStatusEnum == NotificationStatusEnum.delivered) {
         KeyStreamService()
             .mapUpdatedLocationDataToWidget(locationNotificationModel);
       }
 
       print('update result - $result');
 
-      return result;
+      return (result.notificationStatusEnum ==
+          NotificationStatusEnum.delivered);
     } catch (e) {
       return false;
     }
@@ -284,14 +315,21 @@ class RequestLocationService {
         locationNotificationModel.receiver,
       );
 
-      var result = await AtLocationNotificationListener().atClientInstance!.put(
-            atKey,
-            LocationNotificationModel.convertLocationNotificationToJson(
-                locationNotificationModel),
+      var result = await AtClientManager.getInstance()
+          .notificationService
+          .notify(
+            NotificationParams.forUpdate(
+              atKey,
+              value:
+                  LocationNotificationModel.convertLocationNotificationToJson(
+                      locationNotificationModel),
+            ),
           );
+
       print('sendDeleteAck $result');
-      if (result) {}
-      return result;
+      if (result.notificationStatusEnum == NotificationStatusEnum.delivered) {}
+      return (result.notificationStatusEnum ==
+          NotificationStatusEnum.delivered);
     } catch (e) {
       print('sendDeleteAck error $e');
       return false;
