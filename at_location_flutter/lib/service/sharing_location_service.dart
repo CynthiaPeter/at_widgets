@@ -305,7 +305,19 @@ class SharingLocationService {
         key.metadata!.expiresAt = locationNotificationModel.to;
       }
 
-      key.sharedWith = locationNotificationModel.receiver;
+      if (locationNotificationModel.atsignCreator!.contains('@')) {
+        key.sharedBy = locationNotificationModel.atsignCreator;
+      } else {
+        key.sharedBy = '@' + locationNotificationModel.atsignCreator!;
+      }
+
+      if (locationNotificationModel.receiver!.contains('@')) {
+        key.sharedWith = locationNotificationModel.receiver;
+      } else {
+        key.sharedWith = '@' + locationNotificationModel.receiver!;
+      }
+
+      // key.sharedWith = locationNotificationModel.receiver;
       // !.replaceAll('@', '');
 
       print('key.sharedWith ${key.sharedWith}');
