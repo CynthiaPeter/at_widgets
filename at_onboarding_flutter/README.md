@@ -6,7 +6,10 @@
 
 # at_onboarding_flutter
 
-A flutter plugin project to cover the onboarding flow of @protocol apps.
+
+**at_onboarding_flutter** is a widget that gives developers an opportunity to create easy onboarding processes for their flutter applications.
+
+With a focus on end-to-end encryption, this flutter package covers the onboarding flow of applications built on the  @protocol.
 
 
 ### API Key
@@ -138,3 +141,12 @@ TextButton(
   },
   child: Text('Onboard my @sign'))
 ```
+
+
+  > We call giving people control of access to their data "*flipping the internet*".
+
+---
+
+ ## Contributing to this Package
+ 
+  If you will like to contribute to the package, check our [contribution guide.](https://github.com/atsign-foundation/at_widgets/blob/trunk/CONTRIBUTING.md)
